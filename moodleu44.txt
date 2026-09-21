@@ -1,0 +1,97 @@
+VM DB (xx.3/29)	
+nano /etc/network interface
+auto enp0s3
+iface enp0s3 inet static
+	address 192.168.xx.3/29
+	gateway 192.168.2.1	
+systemctl restart networking
+ping 192.168.2.1
+ping 192.168.2.2	
+nano resolv.conf
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 192.168.xx.1
+KALAU GA DAPET INTERNET (GABISA PING 8.8.8.8) MATIIN DEBIAN DULU
+apt update && apt install mariadb-server -y	
+nano /etc/mysql/MariaDB.conf.d/50-server.cnf
+cari bind-address ganti menjadi 0.0.0.0
+systemctl restart MariaDB
+mysql -u root
+CREATE DATABASE db_moodle DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'adminmoodle'@'192.168.xx.2' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON db_moodle.* TO 'adminmoodle'@'192.168.xx.2';
+FLUSH PRIVILEGES;
+EXIT;
+mkdir -p /backup
+nano /usr/local/bin/backup_db.sh
+#!/bin/bash
+DATE=$(date +%Y-%m-%d)
+BACKUP_DIR="/backup"
+# Dump database Moodle dan kompres ke tar
+mysqldump -u root -p'PASSWORD_ROOT_MARIADB' db_moodle > $BACKUP_DIR/db_moodle_$DATE.sql
+tar -cvf $BACKUP_DIR/backup_db_$DATE.tar -C $BACKUP_DIR db_moodle_$DATE.sql
+# Hapus file dump raw sql, sisakan file .tar
+rm $BACKUP_DIR/db_moodle_$DATE.sql
+# Hapus file backup .tar di folder /backup yang usianya lebih dari 10 hari
+find $BACKUP_DIR -type f -name "*.tar" -mtime +10 -delete
+chmod +x /usr/local/bin/backup_db.sh
+crontab -e
+0 1 * * * /usr/local/bin/backup_db.sh
+
+
+VM WEB (xx.2/29)
+nano /etc/network interface
+auto enp0s3
+iface enp0s3 inet static
+	address 192.168.xx.2/29
+	gateway 192.168.2.1
+systemctl restart networking	
+ping 192.168.2.1
+ping 192.168.2.3
+nano resolv.conf
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 192.168.xx.1
+apt update && apt install apache2 mariadb-client php libapache2-mod-php php-mysql php-xml php-mbstring php-curl php-zip php-gd php-intl php-soap -y
+mysql -u adminmoodle -p -h 192.168.xx.3
+password "password"
+cd /var/www/html
+wget https://github.com/moodle/moodle/archive/refs/tags/v5.2.2.tar.gz
+tar -zxvf v5.2.2.tar.gz
+mv moodle-5.2.2/* . 
+mv v5.2.2.tar.gz /etc
+mkdir /var/www/moodledata
+chown -R www-data:www-data /var/www/html
+chown -R www-data:www-data /var/www/moodledata
+chmod -R 770 /var/www/moodledata
+chmod -R 755 /var/www/html
+nano /etc/apache2/sites-available/000-default.conf
+DocumentRoot /var/www/html/public
+nano /etc/php/8.2/apache2/php.ini
+cari ;max_input_vars = 1000 ganti jadi max_input_vars = 5000
+nano /var/www/html/config.php
+cari $CGF->wwwroot = 'http://192.168.2.2'; ganti jadi
+systemctl restart apache2
+mkdir -p /backup
+nano /usr/local/bin/backup_web.sh
+#!/bin/bash
+DATE=$(date +%Y-%m-%d)
+BACKUP_DIR="/backup"
+# Kompres folder konfigurasi /etc/apache2 ke file backup_date.tar
+tar -cvf $BACKUP_DIR/backup_apache_$DATE.tar /etc/apache2
+# Hapus file backup .tar di folder /backup yang usianya lebih dari 10 hari
+find $BACKUP_DIR -type f -name "*.tar" -mtime +10 -delete
+chmod +x /usr/local/bin/backup_web.sh
+crontab -e
+0 1 * * * /usr/local/bin/backup_web.sh
+
+
+DI WEB MOODLE
+BAHASA BEBAS
+direktori data /var/www/moodledata
+Jenis MariaDB
+Host Database 192.168.xx.3
+Name Database db_moodle
+User Database adminmoodle
+Password Database 1
+Port Database 3306
