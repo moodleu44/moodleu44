@@ -8,11 +8,11 @@
 
 
 
-|**VM DB (xx.3/29)**|**VM WEB (xx.2/29)**|
-|-|-|
-|nano /etc/network interface<br />*auto enp0s3<br />iface enp0s3 inet static<br />	address 192.168.xx.3/29<br />	gateway 192.168.2.1*|nano /etc/network interface<br />*auto enp0s3<br />iface enp0s3 inet static<br />	address 192.168.xx.2/29<br />	gateway 192.168.2.1*|
-|systemctl restart networking|systemctl restart networking|
-|ping 192.168.2.1<br />ping 192.168.2.2|ping 192.168.2.1<br />ping 192.168.2.3|
+| **VM DB (xx.3/29)** | **VM WEB (xx.2/29)** |
+| --- | --- |
+| `nano /etc/network/interfaces`<br>`auto enp0s3`<br>`iface enp0s3 inet static`<br>`address 192.168.xx.3/29`<br>`gateway 192.168.2.1` | `nano /etc/network/interfaces`<br>`auto enp0s3`<br>`iface enp0s3 inet static`<br>`address 192.168.xx.2/29`<br>`gateway 192.168.2.1` |
+| `systemctl restart networking` | `systemctl restart networking` |
+| `ping 192.168.2.1`<br>`ping 192.168.2.2` | `ping 192.168.2.1`<br>`ping 192.168.2.3` |
 |nano resolv.conf<br />*nameserver 8.8.8.8<br />nameserver 8.8.4.4<br />nameserver 192.168.xx.1*|nano resolv.conf<br />*nameserver 8.8.8.8<br />nameserver 8.8.4.4<br />nameserver 192.168.xx.1<br /><br />**KALAU GA DAPET INTERNET (GABISA PING 8.8.8.8) MATIIN DEBIAN DULU***|
 |apt update \&\& apt install mariadb-server -y|apt update \&\& apt install apache2 mariadb-client php libapache2-mod-php php-mysql php-xml php-mbstring php-curl php-zip php-gd php-intl php-soap -y|
 |nano /etc/mysql/MariaDB.conf.d/50-server.cnf<br />*cari bind-address ganti menjadi 0.0.0.0*|-|
